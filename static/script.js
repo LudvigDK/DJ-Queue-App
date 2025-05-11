@@ -1,0 +1,1 @@
+// (empty — all page-specific logic is inline in templates)

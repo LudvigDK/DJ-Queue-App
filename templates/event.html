@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+  <title>Guest Queue</title>
+  <link href="/static/style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h1>Event: {{ event_uuid }}</h1>
+    <div class="search-bar">
+      <input id="q" placeholder="Search Tidal for tracks…">
+      <button onclick="doSearch()">Search</button>
+    </div>
+    <ul id="results"></ul>
+    <h2>Queue</h2>
+    <ul id="queue"></ul>
+  </div>
+  <script src="/static/script.js"></script>
+  <script>
+    const ev = "{{ event_uuid }}";
+    function doSearch() {
+      let q = document.getElementById('q').value;
+      fetch(`/api/${ev}/search?q=${encodeURIComponent(q)}`)
+        .then(r=>r.json())
+        .then(res=>{
+          const ul = document.getElementById('results');
+          ul.innerHTML = '';
+          res.forEach(t=>{
+            let li = document.createElement('li');
+            li.textContent = `${t.title} – ${t.artist}`;
+            let btn = document.createElement('button');
+            btn.textContent = 'Add';
+            btn.onclick = ()=>addTrack(t);
+            li.appendChild(btn);
+            ul.appendChild(li);
+          });
+        });
+    }
+    function addTrack(t) {
+      fetch(`/api/${ev}/add`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(t)
+      }).then(fetchQueue);
+    }
+    function vote(id) {
+      fetch(`/api/${ev}/vote`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({id})
+      }).then(fetchQueue);
+    }
+    function fetchQueue() {
+      fetch(`/api/${ev}/queue`)
+        .then(r=>r.json())
+        .then(list=>{
+          const ul = document.getElementById('queue');
+          ul.innerHTML = '';
+          list.forEach(t=>{
+            let li = document.createElement('li');
+            li.textContent = `${t.title} – ${t.artist} (${t.votes})`;
+            let btn = document.createElement('button');
+            btn.textContent = 'Vote';
+            btn.onclick = ()=>vote(t.track_id);
+            li.appendChild(btn);
+            ul.appendChild(li);
+          });
+        });
+    }
+    setInterval(fetchQueue, 2000);
+    fetchQueue();
+  </script>
+</body>
+</html>
