@@ -1,15 +1,19 @@
 import uuid, io, sqlite3
 from datetime import datetime
-import tidalapi, qrcode
+import qrcode
 from flask import (
     Flask, g, request, render_template,
     redirect, url_for, jsonify, send_file
 )
+from tidal_client import TidalClient
 
 app = Flask(__name__)
 # configure your TIDAL credentials here
-app.config['TIDAL_USERNAME'] = 'YOUR_TIDAL_USERNAME'
-app.config['TIDAL_PASSWORD'] = 'YOUR_TIDAL_PASSWORD'
+tidal = TidalClient(
+    client_id='YOUR_CLIENT_ID',
+    client_secret='YOUR_CLIENT_SECRET',
+    country_code='US'
+)
 
 # --- DATABASE HELPERS ---
 DB_PATH = 'database.db'
@@ -43,13 +47,6 @@ def init_db():
         votes INTEGER
       )""")
     db.commit()
-
-# --- TIDAL SESSION ---
-session = tidalapi.Session()
-session.login(
-    username=app.config['TIDAL_USERNAME'],
-    password=app.config['TIDAL_PASSWORD']
-)
 
 # --- ROUTES ---
 @app.before_first_request
@@ -89,18 +86,12 @@ def qr_code(event_uuid):
 def event_page(event_uuid):
     return render_template('event.html', event_uuid=event_uuid)
 
+# --- API ENDPOINTS ---
 @app.route('/api/<event_uuid>/search')
 def search(event_uuid):
     q = request.args.get('q', '')
-    results = session.search('track', q)
-    out = []
-    for t in results.tracks:
-        out.append({
-          'id': str(t.id),
-          'title': t.name,
-          'artist': t.artist.name
-        })
-    return jsonify(out)
+    results = tidal.search_tracks(q, limit=20)
+    return jsonify(results)
 
 @app.route('/api/<event_uuid>/add', methods=['POST'])
 def add_track(event_uuid):
@@ -139,8 +130,7 @@ def queue(event_uuid):
       "FROM tracks WHERE event_uuid=? ORDER BY votes DESC",
       (event_uuid,)
     )
-    tracks = [dict(r) for r in cur.fetchall()]
-    return jsonify(tracks)
+    return jsonify([dict(r) for r in cur.fetchall()])
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
