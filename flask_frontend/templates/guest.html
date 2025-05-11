@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head><title>Event: {{ code }}</title></head>
+<body>
+  <h1>Event: {{ code }}</h1>
+  <input id="search" placeholder="Search Tidal"><button onclick="doSearch()">Search</button>
+  <ul id="results"></ul>
+  <h2>Queue</h2>
+  <ul id="queue"></ul>
+
+  <script>
+    const code = "{{ code }}";
+    async function doSearch(){
+      const q = document.getElementById("search").value;
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      const songs = await res.json();
+      const ul = document.getElementById("results");
+      ul.innerHTML = songs.map(s=>
+        `<li>${s.title} – ${s.artist}
+           <button onclick='add("${s.track_id}","${s.title}","${s.artist}")'>Add</button>
+         </li>`
+      ).join("");
+    }
+    async function add(id,title,artist){
+      await fetch("/api/items/add", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({code, item:{track_id:id,title,artist}})
+      });
+      loadQueue();
+    }
+    async function vote(itemId){
+      await fetch("/api/items/vote", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({id:itemId})
+      });
+      loadQueue();
+    }
+    async function loadQueue(){
+      const res = await fetch(`/api/events/${code}`);
+      const items = (await res.json()).items;
+      const ul = document.getElementById("queue");
+      ul.innerHTML = items
+        .sort((a,b)=>b.votes-a.votes)
+        .map(i=>
+          `<li>${i.title} – ${i.artist} (${i.votes})
+             <button onclick="vote(${i.id})">▲</button>
+           </li>`
+        ).join("");
+    }
+    setInterval(loadQueue,3000);
+    loadQueue();
+  </script>
+</body>
+</html>
