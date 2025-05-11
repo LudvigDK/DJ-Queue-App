@@ -3,10 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
 from .routes import router
 
+# Create SQLite tables
 Base.metadata.create_all(bind=engine)
+
 app = FastAPI()
 
-# Allow CORS for Flask frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

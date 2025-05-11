@@ -1,25 +1,27 @@
-# DJ Queue Dashboard (FastAPI + Flask Frontend)
+# DJ Queue Dashboard (SQLite, FastAPI + Flask)
 
-## Setup Backend
+## Setup
 
-```bash
-cd backend
-pip install -r requirements.txt
-export DATABASE_URL=postgresql://user:pass@host:port/dbname
-export TIDAL_API_KEY=<your_access_token>
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+1. **Backend**  
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+   - Uses local `dj_queue.db` SQLite file.
 
-## Setup Flask Frontend
+2. **Frontend**  
+   ```bash
+   cd flask_frontend
+   pip install -r requirements.txt
+   python app.py
+   ```
+   - Browse `http://localhost:5000` to create events and guests use the same server.
 
-```bash
-cd flask_frontend
-pip install -r requirements.txt
-# Set this to point at your running FastAPI
-export API_BASE=http://localhost:8000
-python app.py
-```
+3. **Tidal**  
+   - Set `TIDAL_API_KEY` env var if you want search to work:
+     ```bash
+     export TIDAL_API_KEY=your_access_token
+     ```
 
-- FastAPI runs on port 8000
-- Flask frontend runs on port 5000
-- Visit http://localhost:5000 to create events, view dashboards, search/vote
+No external DB—everything runs with Python and a local SQLite file.

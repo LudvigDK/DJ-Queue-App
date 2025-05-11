@@ -1,11 +1,10 @@
-import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import qrcode
 from io import BytesIO
 import base64
 import requests
 
-API_BASE = os.getenv("API_BASE", "http://localhost:8000")
+API_BASE = "http://localhost:8000"
 
 app = Flask(__name__)
 
@@ -23,10 +22,9 @@ def dashboard(code):
     evt = requests.get(f"{API_BASE}/events/{code}").json()
     link = f"{request.url_root}guest/{code}"
     img = qrcode.make(link)
-    buf = BytesIO()
-    img.save(buf)
-    data_uri = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
-    return render_template("dashboard.html", code=code, name=evt["name"], qr=data_uri)
+    buf = BytesIO(); img.save(buf)
+    qr_data = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+    return render_template("dashboard.html", code=code, name=evt["name"], qr=qr_data)
 
 @app.route("/guest/<code>")
 def guest(code):
@@ -34,26 +32,22 @@ def guest(code):
 
 @app.route("/api/events/<code>")
 def proxy_event(code):
-    r = requests.get(f"{API_BASE}/events/{code}")
-    return jsonify(r.json())
+    return jsonify(requests.get(f"{API_BASE}/events/{code}").json())
 
 @app.route("/api/search")
 def proxy_search():
     q = request.args.get("q","")
-    r = requests.get(f"{API_BASE}/search/", params={"q": q})
-    return jsonify(r.json())
+    return jsonify(requests.get(f"{API_BASE}/search/", params={"q": q}).json())
 
 @app.route("/api/items/add", methods=["POST"])
 def proxy_add():
     data = request.json
-    r = requests.post(f"{API_BASE}/events/{data['code']}/items/", json=data["item"])
-    return jsonify(r.json())
+    return jsonify(requests.post(f"{API_BASE}/events/{data['code']}/items/", json=data["item"]).json())
 
 @app.route("/api/items/vote", methods=["POST"])
 def proxy_vote():
     data = request.json
-    r = requests.post(f"{API_BASE}/items/{data['id']}/vote")
-    return jsonify(r.json())
+    return jsonify(requests.post(f"{API_BASE}/items/{data['id']}/vote").json())
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)

@@ -1,24 +1,16 @@
 <!doctype html>
-<html>
-<head><title>Dashboard: {{ name }}</title></head>
-<body>
+<html><head><title>Dashboard: {{ name }}</title></head><body>
   <h1>Dashboard: {{ name }}</h1>
-  <img src="{{ qr }}" alt="QR code"><br>
-  <p>Share this link: <a href="{{ url_for('guest', code=code, _external=True) }}">
-    {{ url_for('guest', code=code, _external=True) }}</a></p>
-  <h2>Queue</h2>
-  <ul id="queue"></ul>
+  <img src="{{ qr }}" alt="QR"><br>
+  <p>Link: <a href="{{ url_for('guest', code=code, _external=True) }}">{{ url_for('guest', code=code, _external=True) }}</a></p>
+  <h2>Queue</h2><ul id="queue"></ul>
   <script>
-    const code = "{{ code }}";
-    async function loadQueue() {
-      const res = await fetch(`/api/events/${code}`);
-      const items = (await res.json()).items;
-      items.sort((a,b)=>b.votes-a.votes);
-      const ul = document.getElementById("queue");
-      ul.innerHTML = items.map(i=>`<li>${i.title} – ${i.artist} (${i.votes})</li>`).join("");
+    const code="{{code}}";
+    async function loadQ(){
+      const r=await fetch(`/api/events/${code}`);
+      const items=(await r.json()).items.sort((a,b)=>b.votes-a.votes);
+      document.getElementById("queue").innerHTML = items.map(i=>`<li>${i.title} – ${i.artist} (${i.votes})</li>`).join("");
     }
-    setInterval(loadQueue, 3000);
-    loadQueue();
+    setInterval(loadQ,3000); loadQ();
   </script>
-</body>
-</html>
+</body></html>

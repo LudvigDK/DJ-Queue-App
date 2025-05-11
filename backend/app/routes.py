@@ -28,7 +28,7 @@ def read_event(code: str, db: Session = Depends(get_db)):
 
 @router.get("/events/{code}/qr")
 def get_qr(code: str):
-    link = f"https://yourdomain.com/guest/{code}"
+    link = f"http://localhost:5000/guest/{code}"
     img = qrcode.make(link)
     buf = BytesIO()
     img.save(buf)
@@ -38,7 +38,7 @@ def get_qr(code: str):
 def add_track(code: str, item: schemas.QueueItemCreate, db: Session = Depends(get_db)):
     evt = crud.get_event_by_code(db, code)
     if not evt:
-        raise HTTPException(404, "Event not found")
+        raise HTTPException(status_code=404, detail="Event not found")
     return crud.add_item(db, evt.id, item)
 
 @router.post("/items/{item_id}/vote", response_model=schemas.QueueItem)
@@ -50,8 +50,8 @@ def vote(item_id: int, db: Session = Depends(get_db)):
 async def search(q: str):
     from aiohttp import ClientSession
     API = 'https://api.tidal.com/v1/search'
-    params = {'query': q, 'types': 'TRACK', 'limit': 10, 'countryCode':'US'}
-    headers = {'Authorization': f"Bearer {os.getenv('TIDAL_API_KEY')}"}
+    params = {'query': q, 'types': 'TRACK', 'limit': 10}
+    headers = {'Authorization': f"Bearer {os.getenv('TIDAL_API_KEY', '')}"}
     async with ClientSession() as session:
         async with session.get(API, params=params, headers=headers) as resp:
             data = await resp.json()

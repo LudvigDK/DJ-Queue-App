@@ -13,9 +13,6 @@ def create_event(db: Session, evt: schemas.EventCreate):
 def get_event_by_code(db: Session, code: str):
     return db.query(models.Event).filter(models.Event.code == code).first()
 
-def list_events(db: Session):
-    return db.query(models.Event).all()
-
 def add_item(db: Session, event_id: int, item: schemas.QueueItemCreate):
     db_item = models.QueueItem(event_id=event_id, **item.dict())
     db.add(db_item)
